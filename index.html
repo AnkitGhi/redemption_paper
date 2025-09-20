@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redemption Score: A Multi-Modal Evaluation Framework for Image Captioning</title>
+    <style>
+        :root {
+            --primary-color: #1a365d;
+            --secondary-color: #3182ce;
+            --accent-color: #e53e3e;
+            --success-color: #38a169;
+            --background-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #2d3748;
+            --muted-text: #718096;
+            --border-color: #e2e8f0;
+            --header-font: 'Georgia', serif;
+            --body-font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --mono-font: 'Monaco', 'Cascadia Code', monospace;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--body-font);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 3rem 0;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-family: var(--header-font);
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        header p {
+            font-size: 1.3rem;
+            color: var(--muted-text);
+            max-width: 900px;
+            margin: 0 auto;
+            font-weight: 300;
+        }
+
+        nav {
+            position: sticky;
+            top: 0;
+            background: rgba(26, 54, 93, 0.95);
+            backdrop-filter: blur(15px);
+            padding: 1rem 0;
+            z-index: 1000;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        nav .container {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 25px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+        
+        nav a:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(49, 130, 206, 0.4);
+        }
+
+        main {
+            background: var(--background-color);
+            min-height: 100vh;
+            padding: 3rem 0;
+        }
+
+        .section {
+            background: var(--card-bg);
+            margin: 2rem 0;
+            padding: 3rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+        }
+
+        h2 {
+            font-family: var(--header-font);
+            color: var(--primary-color);
+            font-size: 2.2rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--secondary-color);
+            position: relative;
+        }
+
+        h3 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+            font-weight: 600;
+        }
+
+        .highlight {
+            background: linear-gradient(120deg, var(--secondary-color), #4299e1);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.95em;
+        }
+
+        .methodology-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .method-card {
+            background: linear-gradient(135deg, #f8fafc 0%, #edf2f7 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            border-left: 5px solid var(--secondary-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .method-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, var(--secondary-color), transparent);
+            opacity: 0.1;
+            border-radius: 0 12px 0 100px;
+        }
+        
+        .method-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(49, 130, 206, 0.15);
+            border-left-color: var(--accent-color);
+        }
+        
+        .method-card h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .results-section {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .results-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
+        }
+        
+        .stat {
+            font-size: 4rem;
+            font-weight: 800;
+            margin: 1rem 0;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-label {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            font-weight: 300;
+            position: relative;
+            z-index: 1;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 1rem 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--primary-color), #2c5282);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .best-score {
+            background: var(--success-color);
+            color: white;
+            font-weight: 600;
+            border-radius: 4px;
+            padding: 2px 6px;
+        }
+
+        .improvement {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .degradation {
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .figure {
+            text-align: center;
+            margin: 3rem 0;
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 2px dashed var(--border-color);
+        }
+        
+        .figure img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .figure figcaption {
+            margin-top: 1rem;
+            font-style: italic;
+            color: var(--muted-text);
+            font-size: 0.95rem;
+        }
+
+        .code-block {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: var(--mono-font);
+            font-size: 0.9rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            border: 1px solid #2d3748;
+        }
+
+        .button {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--secondary-color), #4299e1);
+            color: white;
+            padding: 1rem 2rem;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 1rem 0.5rem;
+            box-shadow: 0 4px 15px rgba(49, 130, 206, 0.3);
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(49, 130, 206, 0.4);
+            background: linear-gradient(135deg, #2c5282, var(--secondary-color));
+        }
+
+        .formula {
+            background: #f7fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: var(--mono-font);
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .metric-score {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--secondary-color);
+        }
+
+        footer {
+            background: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 3rem 0;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .section {
+                padding: 2rem 1.5rem;
+                margin: 1.5rem 0;
+            }
+            
+            nav .container {
+                gap: 1rem;
+            }
+            
+            .methodology-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            th, td {
+                padding: 0.5rem 0.3rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        .scroll-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            z-index: 9999;
+        }
+
+        .scroll-progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), #4299e1);
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="scroll-indicator">
+        <div class="scroll-progress" id="scroll-progress"></div>
+    </div>
+
+    <header>
+        <div class="container">
+            <h1>Redemption Score</h1>
+            <p>A Multi-Modal Evaluation Framework for Image Captioning via Distributional, Perceptual, and Linguistic Signal Triangulation</p>
+        </div>
+    </header>
+    
+    <nav>
+        <div class="container">
+            <a href="#abstract">Abstract</a>
+            <a href="#methodology">Methodology</a>
+            <a href="#results">Results</a>
+            <a href="#experiments">Experiments</a>
+            <a href="#comparisons">Comparisons</a>
+            <a href="#ablation">Ablation Study</a>
+            <a href="#citation">Citation</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <section id="abstract" class="section">
+                <h2>Abstract</h2>
+                <p>Evaluating image captions requires cohesive assessment of both visual semantics and language pragmatics, which is often not entirely captured by most metrics. We introduce <span class="highlight">Redemption Score (RS)</span>, a novel hybrid framework that ranks image captions by triangulating three complementary signals:</p>
+                <ul style="margin: 1.5rem 0; padding-left: 2rem;">
+                    <li><strong>Mutual Information Divergence (MID)</strong> for global image-text distributional alignment</li>
+                    <li><strong>DINO-based perceptual similarity</strong> of cycle-generated images for visual grounding</li>
+                    <li><strong>LLM Text Embeddings</strong> for contextual text similarity against human references</li>
+                </ul>
+                <p>A calibrated fusion of these signals allows RS to offer a more holistic assessment. On the Flickr8k benchmark, RS achieves a <span class="highlight">Kendall-τ of 58.42%</span>, outperforming most prior methods and demonstrating superior correlation with human judgments without requiring task-specific training.</p>
+            </section>
+
+            <section class="figure">
+                <img src="https://i.imgur.com/8aV4m2i.jpeg" alt="Redemption Score Framework Overview">
+                <figcaption>Figure 1: Overview of the Redemption Score framework showing the triangulation of MID, DINO, and BERTScore signals for comprehensive caption evaluation.</figcaption>
+            </section>
+
+            <section id="methodology" class="section">
+                <h2>Methodology</h2>
+                <p>The Redemption Score is a training-free framework that integrates three distinct metrics to overcome individual biases and create a more robust evaluation system. The final score is a calibrated fusion of these signals.</p>
+                
+                <div class="methodology-grid">
+                    <div class="method-card">
+                        <h3>🎯 MID (Distributional)</h3>
+                        <p>Captures global alignment between image and text distributions using Mutual Information Divergence. This helps detect statistical outliers and ensures the caption fits expected patterns.</p>
+                        <div class="formula">
+                            I(X;Y) = ½ log[det(Σₓ)det(Σᵧ)/det(Σₓᵧ)]
+                        </div>
+                    </div>
+                    <div class="method-card">
+                        <h3>👁️ DINO (Perceptual)</h3>
+                        <p>Measures visual consistency by regenerating an image from the caption and comparing it to the original using the DINO vision transformer. This flags visual inaccuracies through cycle generation.</p>
+                        <div class="formula">
+                            DINO_sim = ½[⟨ê(I), ê(Ĩ_cand)⟩ + ⟨ê(Ĩ_cand), ê(Ĩ_ref)⟩]
+                        </div>
+                    </div>
+                    <div class="method-card">
+                        <h3>📝 GTE Score (Linguistic)</h3>
+                        <p>Utilizes General Text Embeddings to assess semantic similarity between the candidate caption and human references, catching linguistic mismatches that other metrics might miss.</p>
+                        <div class="formula">
+                            GTEScore = cos(e(ĉ), e(c_ref))
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Aggregation Strategy Comparison</h3>
+                <p>We compare three aggregation approaches to validate our hybrid method:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Approach</th>
+                                <th>Best Weights (α, β, γ)</th>
+                                <th>Kendall-τ</th>
+                                <th>Mean Score</th>
+                                <th>Improvement</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: #e6fffa;">
+                                <td><strong>Hybrid (λ=0.8)</strong></td>
+                                <td><strong>(0.15, 0.30, 0.55)</strong></td>
+                                <td><strong>0.5839</strong></td>
+                                <td><strong>0.5405</strong></td>
+                                <td><strong>Base</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Purely Additive (λ=1)</td>
+                                <td>(0.35, 0.25, 0.40)</td>
+                                <td>0.5826</td>
+                                <td>0.5405</td>
+                                <td>-0.22%</td>
+                            </tr>
+                            <tr>
+                                <td>Purely Multiplicative (λ=0)</td>
+                                <td>(0.15, 0.20, 0.65)</td>
+                                <td>0.5713</td>
+                                <td>0.5141</td>
+                                <td>-2.21%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Metric Combination Analysis</h3>
+                <p>Exhaustive evaluation of all 20 possible three-metric combinations from PMI, LLM embeddings, DINO, BERT, LPIPS, and CLIP:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric Combination</th>
+                                <th>Weights (α, β, γ)</th>
+                                <th>λ</th>
+                                <th>Kendall-τ</th>
+                                <th>Std Dev</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: #e6fffa;">
+                                <td><strong>PMI + LLM + DINO</strong></td>
+                                <td><strong>0.15, 0.50, 0.35</strong></td>
+                                <td><strong>0.80</strong></td>
+                                <td><strong>0.584</strong></td>
+                                <td><strong>0.106</strong></td>
+                            </tr>
+                            <tr>
+                                <td>PMI + LLM + LPIPS</td>
+                                <td>0.20, 0.50, 0.30</td>
+                                <td>0.80</td>
+                                <td>0.581</td>
+                                <td>0.118</td>
+                            </tr>
+                            <tr>
+                                <td>PMI + LLM + BERT</td>
+                                <td>0.15, 0.65, 0.20</td>
+                                <td>0.60</td>
+                                <td>0.578</td>
+                                <td>0.125</td>
+                            </tr>
+                            <tr>
+                                <td>PMI + LLM + CLIP</td>
+                                <td>0.15, 0.65, 0.20</td>
+                                <td>0.00</td>
+                                <td>0.574</td>
+                                <td>0.386</td>
+                            </tr>
+                            <tr>
+                                <td>LLM + DINO + CLIP</td>
+                                <td>0.55, 0.25, 0.20</td>
+                                <td>0.00</td>
+                                <td>0.572</td>
+                                <td>0.144</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Qualitative Analysis: Complementary Failure Modes</h3>
+                <p>Our analysis reveals how individual components fail in complementary ways, which our combined metric successfully addresses:</p>
+                
+                <div class="methodology-grid">
+                    <div class="method-card">
+                        <h3>PMI Score Failures</h3>
+                        <p><strong>Issue:</strong> PMI gives unexpectedly low scores to captions that humans rate as reasonable, suggesting limitations in distributional modeling.</p>
+                        <p><strong>Example:</strong> "Man falling off a blue surfboard in the ocean"<br>
+                        PMI: 0.081, RS: 0.649, Human: 2.67/4</p>
+                    </div>
+                    <div class="method-card">
+                        <h3>DINO Score Failures</h3>
+                        <p><strong>Issue:</strong> DINO penalizes captions too harshly for minor visual inaccuracies that humans find acceptable.</p>
+                        <p><strong>Example:</strong> "A young girl wearing a purple shirt and pink headband"<br>
+                        DINO: 0.182, RS: 0.746, Human: 3.00/4</p>
+                    </div>
+                    <div class="method-card">
+                        <h3>GTEScore Failures</h3>
+                        <p><strong>Issue:</strong> Overweights linguistic fluency, missing visual-semantic misalignments.</p>
+                        <p><strong>Example:</strong> "Two dogs are jumping up at each other"<br>
+                        GTE: 0.664, RS: 0.495, Human: 1.67/4</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="technical-details" class="section">
+                <h2>Technical Implementation</h2>
+                
+                <h3>Parameter Optimization</h3>
+                <p>The optimal parameters found through constrained grid search:</p>
+                <div class="comparison-grid">
+                    <div class="metric-card">
+                        <div class="metric-score">α = 0.15</div>
+                        <p>MID Weight</p>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-score">β = 0.30</div>
+                        <p>DINO Weight</p>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-score">γ = 0.55</div>
+                        <p>GTE Weight</p>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-score">λ = 0.8</div>
+                        <p>Interpolation</p>
+                    </div>
+                </div>
+
+                <h3>Normalization Strategy</h3>
+                <p>All scores are normalized to [0,1] using the transformation:</p>
+                <div class="formula">
+                    X_normalized = X/(1 + |X|) + 1/2
+                </div>
+                <p>This ensures all signals are positive, bounded, and directly comparable across heterogeneous modalities.</p>
+
+                <h3>Computational Requirements</h3>
+                <div class="methodology-grid">
+                    <div class="method-card">
+                        <h3>Dataset Processing</h3>
+                        <p><strong>DINO Component:</strong> ~42,000 images processed<br>
+                        <strong>MID Component:</strong> ~60,000 image-caption pairs<br>
+                        <strong>GTE Component:</strong> ~36,000 text-text comparisons</p>
+                    </div>
+                    <div class="method-card">
+                        <h3>Model Requirements</h3>
+                        <p><strong>Text-to-Image:</strong> Stable Diffusion 3<br>
+                        <strong>Vision Encoder:</strong> DINO ViT-B/8<br>
+                        <strong>Text Encoder:</strong> GTE-large<br>
+                        <strong>CLIP Model:</strong> ViT-L/14</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="limitations" class="section">
+                <h2>Limitations & Future Work</h2>
+                
+                <h3>Current Limitations</h3>
+                <ul style="padding-left: 2rem; margin: 1rem 0;">
+                    <li><strong>Computational Cost:</strong> DINO similarity requires synthetic image generation, increasing evaluation time</li>
+                    <li><strong>Language Support:</strong> Currently optimized for English captions only</li>
+                    <li><strong>Domain Specificity:</strong> Parameters optimized on natural images; performance on specialized domains unclear</li>
+                    <li><strong>Gaussian Assumption:</strong> MID component assumes multivariate Gaussian distributions in embedding space</li>
+                </ul>
+
+                <h3>Future Directions</h3>
+                <div class="methodology-grid">
+                    <div class="method-card">
+                        <h3>Multilingual Extension</h3>
+                        <p>Expand to support diverse languages and cultural contexts with language-specific embedding models and cross-cultural visual understanding.</p>
+                    </div>
+                    <div class="method-card">
+                        <h3>Efficiency Improvements</h3>
+                        <p>Model distillation and reduced image generation requirements to make the framework more computationally efficient.</p>
+                    </div>
+                    <div class="method-card">
+                        <h3>Video-Text Extension</h3>
+                        <p>Extend Redemption Score from image-text to video-text domain with temporal grounding capabilities.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="citation" class="section">
+                <h2>Citation</h2>
+                <p>If you find this work useful in your research, please consider citing:</p>
+                <div class="code-block">
+@article{anonymous2025redemption,
+  title={Redemption Score: A Multi-Modal Evaluation Framework for Image Captioning via Distributional, Perceptual, and Linguistic Signal Triangulation},
+  author={Anonymous},
+  journal={WACV 2026 Submission},
+  year={2025}
+}</div>
+
+                <h3>Resources</h3>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <a href="#" class="button">📄 Paper PDF</a>
+                    <a href="#" class="button">💾 Code Repository</a>
+                    <a href="#" class="button">📊 Supplementary Materials</a>
+                    <a href="#" class="button">🎥 Video Presentation</a>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 WACV Submission - Redemption Score: Multi-Modal Image Captioning Evaluation Framework</p>
+            <p style="margin-top: 0.5rem; opacity: 0.8;">Advancing the state-of-the-art in automatic caption evaluation through signal triangulation</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('nav a').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                const navHeight = document.querySelector('nav').offsetHeight;
+                const targetPosition = target.offsetTop - navHeight - 20;
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Scroll progress indicator
+        window.addEventListener('scroll', () => {
+            const scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+            document.getElementById('scroll-progress').style.width = scrolled + '%';
+        });
+
+        // Add loading animation for tables
+        document.querySelectorAll('table').forEach(table => {
+            table.style.opacity = '0';
+            table.style.transform = 'translateY(20px)';
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+            
+            observer.observe(table);
+        });
+
+        // Highlight active navigation item
+        window.addEventListener('scroll', () => {
+            const sections = document.querySelectorAll('section[id]');
+            const navLinks = document.querySelectorAll('nav a');
+            
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                if (scrollY >= sectionTop - 200) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.style.background = '';
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.style.background = 'var(--secondary-color)';
+                }
+            });
+        });
+    </script>
+
+</body>
+</html></h3>
+                <p>The final Redemption Score uses a hybrid aggregation that interpolates between linear combination and weighted geometric mean:</p>
+                <div class="formula">
+                    RS[i] = λ · L[i] + (1 - λ) · M[i]<br>
+                    where L[i] = α·Z_mid[i] + β·Z_dino[i] + γ·Z_bert[i]<br>
+                    and M[i] = Z_mid[i]^α · Z_dino[i]^β · Z_bert[i]^γ
+                </div>
+            </section>
+
+            <section id="results" class="section results-section">
+                <h2>Key Results</h2>
+                <p>On the Flickr8k benchmark, the Redemption Score demonstrates superior correlation with human judgments compared to previous methods.</p>
+                <div class="stat">58.42%</div>
+                <div class="stat-label">Kendall-τ Correlation with Human Judgments</div>
+                <p style="margin-top: 2rem; position: relative; z-index: 1;">This result highlights the effectiveness of our multi-modal approach in capturing the nuances of caption quality. The framework also shows strong generalization across other datasets like MS-COCO and Conceptual Captions.</p>
+                <a href="#" class="button">📄 Download Full Paper</a>
+                <a href="#" class="button">💻 View Code</a>
+            </section>
+
+            <section id="experiments" class="section">
+                <h2>Experimental Results</h2>
+                
+                <h3>Performance on Flickr8k Dataset</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Value</th>
+                                <th>Kendall-τ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>BLEU-4</td>
+                                <td>0.0465</td>
+                                <td>33.5</td>
+                            </tr>
+                            <tr>
+                                <td>METEOR</td>
+                                <td>0.2441</td>
+                                <td>35.85</td>
+                            </tr>
+                            <tr>
+                                <td>MID</td>
+                                <td>17.55</td>
+                                <td>54.6</td>
+                            </tr>
+                            <tr>
+                                <td>DINO</td>
+                                <td>0.268</td>
+                                <td>48.76</td>
+                            </tr>
+                            <tr>
+                                <td>BERTScore</td>
+                                <td>0.59</td>
+                                <td>38.05</td>
+                            </tr>
+                            <tr>
+                                <td>GTEScore</td>
+                                <td>0.76</td>
+                                <td>53.93</td>
+                            </tr>
+                            <tr style="background: #e6fffa;">
+                                <td><strong>RS (Ours)</strong></td>
+                                <td><strong>0.48</strong></td>
+                                <td><strong class="best-score">58.4</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Cross-Dataset Generalization</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>METEOR</th>
+                                <th>CIDEr</th>
+                                <th>ROUGE-L</th>
+                                <th>CLIP-S</th>
+                                <th>DINO</th>
+                                <th>MID</th>
+                                <th>RS (Ours)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="8" style="background: #f8fafc; font-weight: 600;">Conceptual Captions Dataset</td></tr>
+                            <tr>
+                                <td>Qwen2-VL-7B</td>
+                                <td>0.10</td>
+                                <td>0.05</td>
+                                <td>0.14</td>
+                                <td>0.64</td>
+                                <td>0.52</td>
+                                <td>30.0</td>
+                                <td><strong>0.80</strong></td>
+                            </tr>
+                            <tr>
+                                <td>BLIP-2</td>
+                                <td>0.13</td>
+                                <td>0.97</td>
+                                <td>0.29</td>
+                                <td>0.63</td>
+                                <td>0.49</td>
+                                <td>32.3</td>
+                                <td><strong>0.81</strong></td>
+                            </tr>
+                            <tr>
+                                <td>BLIP</td>
+                                <td>0.12</td>
+                                <td>0.98</td>
+                                <td>0.28</td>
+                                <td>0.62</td>
+                                <td>0.48</td>
+                                <td>30.5</td>
+                                <td><strong>0.81</strong></td>
+                            </tr>
+                            <tr><td colspan="8" style="background: #f8fafc; font-weight: 600;">MS-COCO Dataset</td></tr>
+                            <tr>
+                                <td>Qwen2-VL-7B</td>
+                                <td>0.16</td>
+                                <td>0.01</td>
+                                <td>0.21</td>
+                                <td>0.64</td>
+                                <td>0.60</td>
+                                <td>30.2</td>
+                                <td><strong>0.82</strong></td>
+                            </tr>
+                            <tr>
+                                <td>ViT-GPT2</td>
+                                <td>0.15</td>
+                                <td>0.82</td>
+                                <td>0.34</td>
+                                <td>0.61</td>
+                                <td>0.55</td>
+                                <td>26.8</td>
+                                <td><strong>0.81</strong></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="comparisons" class="section">
+                <h2>Comprehensive Metric Comparison</h2>
+                <p>Comparison of Redemption Score against state-of-the-art metrics on Flickr8k-Expert dataset:</p>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Kendall-τ</th>
+                                <th>Requires Training</th>
+                                <th>Image Grounded</th>
+                                <th>Δ from RS</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>G-VEval-ref-free</td>
+                                <td>59.7</td>
+                                <td>❌</td>
+                                <td>✅</td>
+                                <td><span class="degradation">-1.3</span></td>
+                            </tr>
+                            <tr style="background: #e6fffa;">
+                                <td><strong>RS (Ours)</strong></td>
+                                <td><strong class="best-score">58.4</strong></td>
+                                <td>❌</td>
+                                <td>✅</td>
+                                <td>—</td>
+                            </tr>
+                            <tr>
+                                <td>RefHICE-S</td>
+                                <td>57.7</td>
+                                <td>❌</td>
+                                <td>✅</td>
+                                <td><span class="improvement">+0.7</span></td>
+                            </tr>
+                            <tr>
+                                <td>DENEB</td>
+                                <td>56.8</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                                <td><span class="improvement">+1.6</span></td>
+                            </tr>
+                            <tr>
+                                <td>Polos</td>
+                                <td>56.4</td>
+                                <td>❌</td>
+                                <td>✅</td>
+                                <td><span class="improvement">+2.0</span></td>
+                            </tr>
+                            <tr>
+                                <td>RefPAC-S</td>
+                                <td>55.9</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                                <td><span class="improvement">+2.5</span></td>
+                            </tr>
+                            <tr>
+                                <td>PAC-S</td>
+                                <td>54.3</td>
+                                <td>✅</td>
+                                <td>✅</td>
+                                <td><span class="improvement">+4.1</span></td>
+                            </tr>
+                            <tr>
+                                <td>FLUER</td>
+                                <td>53.0</td>
+                                <td>❌</td>
+                                <td>✅</td>
+                                <td><span class="improvement">+5.4</span></td>
+                            </tr>
+                            <tr>
+                                <td>RefCLIP-S</td>
+                                <td>53.0</td>
+                                <td>❌</td>
+                                <td>✅</td>
+                                <td><span class="improvement">+5.4</span></td>
+                            </tr>
+                            <tr>
+                                <td>CLIP-S</td>
+                                <td>51.2</td>
+                                <td>❌</td>
+                                <td>✅</td>
+                                <td><span class="improvement">+7.2</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h3>Statistical Robustness Analysis</h3>
+                <p>1000-run bootstrap analysis demonstrates excellent stability:</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th>Mean (%)</th>
+                                <th>Std Dev (%)</th>
+                                <th>95% CI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr style="background: #e6fffa;">
+                                <td><strong>RS</strong></td>
+                                <td><strong>58.4</strong></td>
+                                <td><strong>0.43</strong></td>
+                                <td><strong>[57.6, 59.2]</strong></td>
+                            </tr>
+                            <tr>
+                                <td>PMI</td>
+                                <td>54.6</td>
+                                <td>0.50</td>
+                                <td>[53.7, 55.6]</td>
+                            </tr>
+                            <tr>
+                                <td>GTEScore</td>
+                                <td>53.9</td>
+                                <td>0.48</td>
+                                <td>[53.0, 54.8]</td>
+                            </tr>
+                            <tr>
+                                <td>CLIP</td>
+                                <td>51.1</td>
+                                <td>0.48</td>
+                                <td>[50.2, 52.1]</td>
+                            </tr>
+                            <tr>
+                                <td>DINO</td>
+                                <td>48.8</td>
+                                <td>0.48</td>
+                                <td>[47.8, 49.7]</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="ablation" class="section">
+                <h2>Ablation Study</h2>
+                
+                <h3>Aggregation Strategy
